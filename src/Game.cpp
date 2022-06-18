@@ -11,72 +11,94 @@
  * @param board plansza gry 
  * @return int zwraca wynik gry
  */
-int TicTacToe::calculateGameScore(TicTacToe::Board& board, int player) {
-    int score = 0;
-    int temp = 0;
+int TicTacToe::staticScoreEvaluation(TicTacToe::Board& board) {    
+    int evaluation = 0;
+    int count_x = 0;
+    int count_o = 0;
+    int* lines_with_n_x = new int[board.getWinningSize() - 1];
+    int* lines_with_n_o = new int[board.getWinningSize() - 1];
+
+    for (int i = 0; i < board.getWinningSize() - 1; ++i) {
+        lines_with_n_x[i] = 0;
+        lines_with_n_o[i] = 0;
+    }
+    
     for (int row=0; row<board.getSize(); ++row) {
         for (int col=0; col<board.getSize(); ++col) {
-            if(board(col,row) == player) {
-                ++temp;
-            }
-            else if(board(col,row) == TicTacToe::EMPTY) {
-                temp = 0;
-                break;
-            }
+            if (board(col, row) == TicTacToe::CROSS) {
+                count_x++;
+            } 
+            else if (board(col, row) == TicTacToe::CIRCLE) {
+                count_o++;
+            }                        
         }
-        if (temp != 0) {
-            score += power(10, temp);
+        if (count_x != 0) {
+            lines_with_n_x[count_x-1]++;
+            count_x = 0;    
         }
-    }
-
-    for (int row=0; row<board.getSize(); ++row) {
-        for (int col=0; col<board.getSize(); ++col) {
-            if(board(row, col) == player) {
-                ++temp;
-            }
-            else if(board(row, col) == TicTacToe::EMPTY) {
-                temp = 0;
-                break;
-            }
-        }
-        if (temp != 0) {
-            score += power(10, temp);
+        if (count_o != 0) {
+            lines_with_n_o[count_o-1]++;
+            count_o = 0;    
         }
     }
 
-    temp = 0;
+    for (int col=0; col<board.getSize(); ++col) {
+        for (int row=0; row<board.getSize(); ++row) {
+            if (board(col, row) == TicTacToe::CROSS) {
+                count_x++;
+            } 
+            else if (board(col, row) == TicTacToe::CIRCLE) {
+                count_o++;
+            }                        
+        }
+        if (count_x != 0) {
+            lines_with_n_x[count_x-1]++;
+            count_x = 0;    
+        }
+        if (count_o != 0) {
+            lines_with_n_o[count_o-1]++;
+            count_o = 0;    
+        }
+    }
 
     for (int i=0; i<board.getSize(); ++i) {
-        if(board(i,i)==player) {
-            ++temp;
-        }
-        else if(board(i,i)==TicTacToe::EMPTY) {
-            temp = 0;
-            break;
-        }
+        if (board(i, i) == TicTacToe::CROSS) {
+            count_x++;
+        } 
+        else if (board(i, i) == TicTacToe::CIRCLE) {
+            count_o++;
+        }                        
     }
-
-    if (temp != 0) {
-        score += power(10, temp);
+    if (count_x != 0) {
+        lines_with_n_x[count_x-1]++;
+        count_x = 0;    
     }
-
-    temp = 0;
+    if (count_o != 0) {
+        lines_with_n_o[count_o-1]++;
+        count_o = 0;    
+    }
 
     for (int i=0; i<board.getSize(); ++i) {
-        if(board(board.getSize()-i-1, i)==player) {
-            ++temp;
-        }
-        else if(board(board.getSize()-i-1, i)==TicTacToe::EMPTY) {
-            temp = 0;
-            break;
-        }
+        if (board(board.getSize()-1-i, i) == TicTacToe::CROSS) {
+            count_x++;
+        } 
+        else if (board(board.getSize()-1-i, i) == TicTacToe::CIRCLE) {
+            count_o++;
+        }                        
+    }
+    if (count_x != 0) {
+        lines_with_n_x[count_x-1]++;
+        count_x = 0;    
+    }
+    if (count_o != 0) {
+        lines_with_n_o[count_o-1]++;
+        count_o = 0;    
     }
 
-    if (temp != 0) {
-        score += power(10, temp);
+    for (int i = 0; i < board.getWinningSize()-1; ++i) {
+        evaluation += (i+1) * (lines_with_n_x[i] - lines_with_n_o[i]);
     }
-
-    return score;    
+    return evaluation;
 }
 
 
@@ -103,13 +125,7 @@ int TicTacToe::minimax(TicTacToe::Board& board, int player, int alpha, int beta,
 
     // sprawdz czy sa jeszcze mozliwe ruchy lub koniec glebokosci szukania
     if(board.isLeftAvailableSpace() == false || depth == 0) {
-        int score = calculateGameScore(board, player);
-        if (player == TicTacToe::MAXIMIZING_PLAYER) {
-            return score;
-        }
-        else {
-            return -score;
-        }
+        return staticScoreEvaluation(board);        
     }        
 
     // change player
@@ -219,7 +235,7 @@ void TicTacToe::game(TicTacToe::Board& board, int human_player, int min_max_dept
                 else if(board(x, y) != TicTacToe::EMPTY) {
                     std::cout << "Pozycja zajęta" << std::endl;
                     std::cout << enter_text;
-                }
+                }                
                 else {
                     break;
                 }            
@@ -240,7 +256,7 @@ void TicTacToe::game(TicTacToe::Board& board, int human_player, int min_max_dept
         player = (player == TicTacToe::CROSS) ? TicTacToe::CIRCLE : TicTacToe::CROSS;
     }     
     board.print();
-    TicTacToe::printWinner(board);    
+    TicTacToe::printWinner(board, human_player);
 }
 
 
@@ -249,13 +265,25 @@ void TicTacToe::game(TicTacToe::Board& board, int human_player, int min_max_dept
  * 
  * @param board plansza gry
  */
-void TicTacToe::printWinner(TicTacToe::Board& board) {
+void TicTacToe::printWinner(TicTacToe::Board& board, int human_player) {
     int symbol = board.isEnd();
     if(symbol == TicTacToe::CROSS) {
         std::cout << "Krzyzyk wygral!" << std::endl;
+        if(human_player == TicTacToe::CROSS) {
+            std::cout << "Wygrales!" << std::endl;
+        }
+        else {
+            std::cout << "Przegrales!" << std::endl;
+        }
     }
     else if(symbol == TicTacToe::CIRCLE) {
         std::cout << "Kolko wygralo!" << std::endl;
+        if(human_player == TicTacToe::CIRCLE) {
+            std::cout << "Wygrales!" << std::endl;
+        }
+        else {
+            std::cout << "Przegrales!" << std::endl;
+        }
     }
     else {
         std::cout << "Remis" << std::endl;

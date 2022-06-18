@@ -1,4 +1,5 @@
 #include "../inc/Board.hh"
+#include <stdio.h>
 
 using namespace TicTacToe;
 
@@ -165,11 +166,18 @@ void Board::print() {
     int val;
     std::cout << "|";
     for (int i = 0; i < _size; ++i) {
-        std::cout << "---";        
-    }
-    for (int i = 0; i < _size-1; ++i) {
-        std::cout << "-";        
-    }
+        std::cout << "----";        
+    }    
+    std::cout << "|" << std::endl;
+    std::cout << "|";
+    for (int i = 0; i < _size; ++i) {
+        std::cout << " "<<i<<"  ";        
+    }    
+    std::cout << "|" << std::endl;
+    std::cout << "|";
+    for (int i = 0; i < _size; ++i) {
+        std::cout << "----";        
+    }    
     std::cout << "|" << std::endl;
     for(int i = 0; i < _size; ++i) {
         for(int j = 0; j < _size; ++j) {
