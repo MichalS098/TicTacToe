@@ -164,22 +164,29 @@ bool Board::isLeftAvailableSpace() {
 
 void Board::print() {
     int val;
-    std::cout << "|";
-    for (int i = 0; i < _size; ++i) {
+    std::cout << "  |---";
+    for (int i = 0; i < _size-1; ++i) {
         std::cout << "----";        
     }    
     std::cout << "|" << std::endl;
-    std::cout << "|";
+    std::cout << "  |";
     for (int i = 0; i < _size; ++i) {
-        std::cout << " "<<i<<"  ";        
+        if(i==_size-1) {
+            std::cout << " "<<i<<" ";        
+        }
+        else {
+            std::cout << " "<<i<<"  ";        
+        }
     }    
     std::cout << "|" << std::endl;
-    std::cout << "|";
-    for (int i = 0; i < _size; ++i) {
+    std::cout << "  |---";
+    for (int i = 0; i < _size-1; ++i) {
         std::cout << "----";        
     }    
     std::cout << "|" << std::endl;
+
     for(int i = 0; i < _size; ++i) {
+        std::cout << i<<" ";
         for(int j = 0; j < _size; ++j) {
             std::cout << "|";
             val = _board[j + _size * i];            
@@ -195,7 +202,7 @@ void Board::print() {
         }
         std::cout << "|";
         std::cout<<std::endl;                
-        std::cout << "|";
+        std::cout << "  |";
         for (int i = 0; i < _size; ++i) {
             std::cout << "---";        
         }

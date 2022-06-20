@@ -97,7 +97,11 @@ int TicTacToe::staticScoreEvaluation(TicTacToe::Board& board) {
 
     for (int i = 0; i < board.getWinningSize()-1; ++i) {
         evaluation += (i+1) * (lines_with_n_x[i] - lines_with_n_o[i]);
-    }
+    }    
+
+    delete[] lines_with_n_x;
+    delete[] lines_with_n_o;    
+    // std::cout<<"evaluation: "<<evaluation<<std::endl;
     return evaluation;
 }
 
@@ -113,52 +117,66 @@ int TicTacToe::staticScoreEvaluation(TicTacToe::Board& board) {
  * @param depth glebokosc szukania algorytmu
  * @return int Wartosc wyniku gry
  */
-int TicTacToe::minimax(TicTacToe::Board& board, int player, int alpha, int beta, int depth) {     
+int TicTacToe::minimax(TicTacToe::Board& board, int alpha, int beta, int depth, bool is_maximizing_player) {         
     // sprawdz czy koniec gry i kto wygral
-    int winner = board.isEnd();
-    if(winner == TicTacToe::MAXIMIZING_PLAYER) {
-        return TicTacToe::INF;
-    }
-    else if(winner == TicTacToe::MINIMIZING_PLAYER) {
-        return -TicTacToe::INF;
+    int winner = board.isEnd();    
+    if(winner != TicTacToe::EMPTY) {
+        if(winner == TicTacToe::MAXIMIZING_PLAYER) { 
+            return TicTacToe::INF;
+        }
+        else if(winner == TicTacToe::MINIMIZING_PLAYER) {
+            return -TicTacToe::INF;
+        }
     }
 
     // sprawdz czy sa jeszcze mozliwe ruchy lub koniec glebokosci szukania
     if(board.isLeftAvailableSpace() == false || depth == 0) {
-        return staticScoreEvaluation(board);        
+        if(is_maximizing_player) {
+            return staticScoreEvaluation(board);
+        }
+        else {
+            return -staticScoreEvaluation(board);
+        }        
     }        
 
-    // change player
-    player = (player == TicTacToe::MAXIMIZING_PLAYER) ? TicTacToe::MINIMIZING_PLAYER : TicTacToe::MAXIMIZING_PLAYER;
-    int best_score = (player == TicTacToe::MAXIMIZING_PLAYER) ? -TicTacToe::INF : TicTacToe::INF;
-
-    for (int row=0; row<board.getSize(); ++row) {
-        for (int col=0; col<board.getSize(); ++col) {
-            if (board(col, row) == TicTacToe::EMPTY) {
-                if (player == TicTacToe::MAXIMIZING_PLAYER) {
-                    board(col, row) = player;
-                    int score = minimax(board, player, alpha, beta, depth-1);
-                    best_score = std::max(best_score, score);
-                    alpha = std::max(alpha, best_score);
+    if(is_maximizing_player) {
+        int max_eval = -TicTacToe::INF;
+        int eval = 0;
+        for (int row=0; row<board.getSize(); ++row) {
+            for (int col=0; col<board.getSize(); ++col) {
+                if (board(col, row) == TicTacToe::EMPTY) {
+                    board(col, row) = TicTacToe::MAXIMIZING_PLAYER;                    
+                    eval = minimax(board, alpha, beta, depth-1, false);
                     board(col, row) = TicTacToe::EMPTY;
+                    max_eval = std::max(max_eval, eval);
+                    alpha = std::max(alpha, eval);
                     if (alpha >= beta) {
-                        return best_score;
+                        return max_eval;
                     }                    
-                }
-                else {
-                    board(col, row) = player;
-                    int score = minimax(board, player, alpha, beta, depth-1);
-                    best_score = std::min(best_score, score);
-                    beta = std::min(beta, best_score);
-                    board(col, row) = TicTacToe::EMPTY;
-                    if (alpha >= beta) {
-                        return best_score;
-                    }                                     
                 }
             }
         }
+        return max_eval;
+    }
+    else {
+        int min_eval = TicTacToe::INF;
+        int eval = 0;
+        for (int row=0; row<board.getSize(); ++row) {
+            for (int col=0; col<board.getSize(); ++col) {
+                if (board(col, row) == TicTacToe::EMPTY) {
+                    board(col, row) = TicTacToe::MINIMIZING_PLAYER;
+                    eval = minimax(board, alpha, beta, depth-1, true);
+                    board(col, row) = TicTacToe::EMPTY;
+                    min_eval = std::min(min_eval, eval);
+                    beta = std::min(beta, eval);
+                    if (alpha >= beta) {
+                        return min_eval;
+                    }                    
+                }
+            }
+        }
+        return min_eval;
     }    
-    return best_score;
 }
 
 
@@ -182,16 +200,16 @@ int TicTacToe::bestMove(TicTacToe::Board& board, int player, int depth) {
     for (int row=0; row<board.getSize(); ++row) {
         for (int col=0; col<board.getSize(); ++col) {
             if (board(col, row) == TicTacToe::EMPTY) {
-                board(col, row) = player;                
+                board(col, row) = player;
                 if(player == TicTacToe::MAXIMIZING_PLAYER) {
-                    temp_score = minimax(board, player, -TicTacToe::INF, TicTacToe::INF, depth);                    
+                    temp_score = minimax(board, -TicTacToe::INF, TicTacToe::INF, depth, false);
                     if(temp_score > best_score) {
                         best_score = temp_score;
                         best_move = row * board.getSize() + col;
                     }
                 }
                 else {
-                    temp_score = minimax(board, player, TicTacToe::INF, -TicTacToe::INF, depth);
+                    temp_score = minimax(board, -TicTacToe::INF, TicTacToe::INF, depth, true);
                     if(temp_score < best_score) {
                         best_score = temp_score;
                         best_move = row * board.getSize() + col;
@@ -201,8 +219,10 @@ int TicTacToe::bestMove(TicTacToe::Board& board, int player, int depth) {
             }
         }
     }    
+    std::cout<<best_move<<std::endl;
     return best_move;
 }
+
 
 
 /**
@@ -252,12 +272,23 @@ void TicTacToe::game(TicTacToe::Board& board, int human_player, int min_max_dept
             else {
                 board(bestMove(board, player, min_max_depth)) = player;
             }
-        }            
+        }     
+
+        // if (board.isEmpty()) {                
+        //     srand(time(NULL));
+        //     x = rand() % board.getSize();
+        //     y = rand() % board.getSize();
+        //     board(x, y) = player;
+        // }        
+        // else {
+        //     board(bestMove(board, player, min_max_depth)) = player;
+        // }
         player = (player == TicTacToe::CROSS) ? TicTacToe::CIRCLE : TicTacToe::CROSS;
     }     
     board.print();
     TicTacToe::printWinner(board, human_player);
 }
+
 
 
 /**
